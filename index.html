@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Wolf AR</title>
+  <style>
+    body{
+      margin: 0;
+      background: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <script src="node_modules/three/build/three.min.js"></script>
+  <script src="node_modules/three/examples/js/libs/stats.min.js"></script>
+  <script src="node_modules/three/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="node_modules/ar.js/three.js/build/ar.min.js"></script>
+  <script>THREEx.ArToolkitContext.baseURL = './'</script>
+  <script>
+    (function(){
+      const renderer = new THREE.WebGLRenderer({
+        // antialias: true,
+        alpha: true
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(new THREE.Color('lightgrey'), 0);
+      document.body.appendChild(renderer.domElement);
+
+      // Scene setup
+      const scene = new THREE.Scene();
+
+      // Add light to scene
+      const hemlight = new THREE.HemisphereLight(0xfff0f0, 0x606066, 0.5);
+      const spotlight = new THREE.SpotLight(0xffffff);
+      hemlight.position.set(10, 10, 10);
+      spotlight.position.set(10000, 10000, 10000);
+      scene.add(hemlight);
+      scene.add(spotlight);
+
+      // Add Camera
+      // const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+      const camera = new THREE.Camera();
+      camera.position.z = 400;
+      scene.add(camera)
+
+      // Set up AR
+      const arToolkitSource = new THREEx.ArToolkitSource({
+        sourceType: 'webcam'
+      });
+      arToolkitSource.init(function onReady() {
+        onResize();
+      });
+
+      const arToolkitContext = new THREEx.ArToolkitContext({
+        cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'assets/camera_para.dat',
+        detectionMode: 'mono',
+        maxDetectionRate: 30,
+        canvasWidth: 80*3,
+        canvasHeight: 60*3,
+      });
+      arToolkitContext.init(function onCompleted(){
+        camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+      });
+
+      window.addEventListener('resize', () => onResize());
+
+      function onResize() {
+        arToolkitSource.onResize();
+        arToolkitSource.copySizeTo(renderer.domElement);
+        if(arToolkitContext.arController) {
+          arToolkitSource.copySizeTo(arToolkitContext.arController.canvas);
+        }
+      }
+
+      // Build Mesh
+      const markerRoot = new THREE.Group;
+      scene.add(markerRoot);
+
+      const markerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+        type: 'pattern',
+        patternUrl: THREEx.ArToolkitContext.baseURL + 'assets/patt.hiro',
+        changeMatrixMode: 'cameraTransformMatrix'
+      });
+
+      const smoothedRoot = new THREE.Group();
+      scene.add(smoothedRoot);
+      const smoothedControls = new THREEx.ArSmoothedControls(smoothedRoot, {
+        lerpPosition: 0.4,
+        lerpQuaternion: 0.3,
+        lerpScale: 1,
+      });
+      const arWorldRoot = smoothedRoot;
+
+      // const geometry = new THREE.CubeGeometry(10, 10, 10);
+      // const material = new THREE.MeshNormalMaterial({
+      // });
+      // const cubeMesh = new THREE.Mesh(geometry, material);
+      // cubeMesh.position.y = -4;
+      // cubeMesh.position.x = -10;
+      // arWorldRoot.add(cubeMesh);
+      const loader = new THREE.GLTFLoader();
+      loader.load('./assets/rigged-wolf.gltf', gltf => {
+        const object = gltf.scene;
+        const gltfAnimation = gltf.animations;
+        object.position.x = -20;
+        object.rotateX(40);
+        object.rotateY(70);
+        arWorldRoot.add(object);
+        object.traverse(node => {
+          if(node.material && 'envMap' in node.material){
+            const albedoTexture = new THREE.TextureLoader().load('./assets/img/wolf-albedo.png');
+            const normalTexture = new THREE.TextureLoader().load('./assets/img/wolf-normal.png');
+            const specularityTexture = new THREE.TextureLoader().load('./assets/img/wolf-spec.png');
+            node.material.map = albedoTexture;
+            node.material.normalMap = normalTexture;
+            node.material.lightMap = specularityTexture;
+            node.material.needsUpdate = true;
+          }
+        });
+      });
+
+      // Add stats
+      const stats = new Stats();
+      document.body.appendChild(stats.dom);
+
+      animate();
+
+      function render() {
+        smoothedControls.update(markerRoot);
+        stats.update();
+        if(arToolkitSource.ready) {
+          arToolkitContext.update(arToolkitSource.domElement);
+          scene.visible = camera.visible;
+        }
+        renderer.render(scene, camera);
+      }
+
+      function animate() {
+        renderer.setAnimationLoop(render);
+      }
+    })();
+  </script>
+</body>
+</html>

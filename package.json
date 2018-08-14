@@ -1,0 +1,23 @@
+{
+  "name": "browser-wolfar",
+  "version": "1.0.0",
+  "description": "Testing AR on GLTF loaded wolf asset",
+  "scripts": {
+    "start": "http-server --ssl"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UWMIML/browser-wolfar.git"
+  },
+  "keywords": [
+    "ar",
+    "xr",
+    "three.js"
+  ],
+  "author": "Joseph Rex <silverdust>",
+  "homepage": "https://github.com/UWMIML/browser-wolfar#readme",
+  "dependencies": {
+    "ar.js": "^1.4.10",
+    "three": "^0.95.0"
+  }
+}
