@@ -35,15 +35,18 @@
       const hemlight = new THREE.HemisphereLight(0xfff0f0, 0x606066, 0.5);
       const spotlight = new THREE.SpotLight(0xffffff);
       hemlight.position.set(10, 10, 10);
-      spotlight.position.set(10000, 10000, 10000);
+      spotlight.position.set(10000, 100000, 10000);
+      spotlight.castShadow = true;
+      spotlight.shadow.bias = 0.0001;
+      spotlight.shadow.mapSize.width = 2048;
+      spotlight.shadow.mapSize.height = 2048;
       scene.add(hemlight);
       scene.add(spotlight);
 
       // Add Camera
-      // const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-      const camera = new THREE.Camera();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+      // const camera = new THREE.Camera();
       camera.position.z = 400;
-      scene.add(camera)
 
       // Set up AR
       const arToolkitSource = new THREEx.ArToolkitSource({
@@ -67,10 +70,10 @@
       window.addEventListener('resize', () => onResize());
 
       function onResize() {
-        arToolkitSource.onResize();
-        arToolkitSource.copySizeTo(renderer.domElement);
+        arToolkitSource.onResizeElement();
+        arToolkitSource.copyElementSizeTo(renderer.domElement);
         if(arToolkitContext.arController) {
-          arToolkitSource.copySizeTo(arToolkitContext.arController.canvas);
+          arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
         }
       }
 
@@ -93,13 +96,6 @@
       });
       const arWorldRoot = smoothedRoot;
 
-      // const geometry = new THREE.CubeGeometry(10, 10, 10);
-      // const material = new THREE.MeshNormalMaterial({
-      // });
-      // const cubeMesh = new THREE.Mesh(geometry, material);
-      // cubeMesh.position.y = -4;
-      // cubeMesh.position.x = -10;
-      // arWorldRoot.add(cubeMesh);
       const loader = new THREE.GLTFLoader();
       loader.load('./assets/rigged-wolf.gltf', gltf => {
         const object = gltf.scene;
@@ -119,13 +115,18 @@
             node.material.needsUpdate = true;
           }
         });
+        if(gltfAnimation && gltfAnimation.length){
+          mixer = new THREE.AnimationMixer(object);
+          gltfAnimation.forEach(animation => {
+            mixer.clipAction(animation).play();
+            animate();
+          });
+        }
       });
 
       // Add stats
       const stats = new Stats();
       document.body.appendChild(stats.dom);
-
-      animate();
 
       function render() {
         smoothedControls.update(markerRoot);
@@ -138,6 +139,7 @@
       }
 
       function animate() {
+        console.log("Hey");
         renderer.setAnimationLoop(render);
       }
     })();
