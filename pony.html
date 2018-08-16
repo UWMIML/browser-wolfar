@@ -47,7 +47,7 @@
       // Add Camera
       const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
       // const camera = new THREE.Camera();
-      camera.position.z = 400;
+      camera.position.z = 50;
 
       // Set up AR
       const arToolkitSource = new THREEx.ArToolkitSource({
@@ -82,7 +82,7 @@
 
       const markerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
         type: 'pattern',
-        patternUrl: './assets/patt.hiro',
+        patternUrl: './assets/milly-wah-kay.patt',
         changeMatrixMode: 'cameraTransformMatrix'
       });
 
@@ -96,22 +96,15 @@
       const arWorldRoot = smoothedRoot;
 
       const loader = new THREE.GLTFLoader();
-      loader.load('./assets/rigged-wolf.gltf', gltf => {
+      loader.load('./assets/pommelpony.gltf', gltf => {
         const object = gltf.scene;
         const gltfAnimation = gltf.animations;
-        object.position.x = -20;
         object.rotateX(40);
         object.rotateY(70);
         arWorldRoot.add(object);
         object.traverse(node => {
-          if(node.material && 'envMap' in node.material){
-            const albedoTexture = new THREE.TextureLoader().load('./assets/img/wolf-albedo.png');
-            const normalTexture = new THREE.TextureLoader().load('./assets/img/wolf-normal.png');
-            const specularityTexture = new THREE.TextureLoader().load('./assets/img/wolf-spec.png');
-            node.material.map = albedoTexture;
-            node.material.normalMap = normalTexture;
-            node.material.lightMap = specularityTexture;
-            node.material.needsUpdate = true;
+          if(node.material){
+            // node.material.wireframe = true;
           }
         });
         if(gltfAnimation && gltfAnimation.length){
