@@ -17,11 +17,10 @@
   <script src="node_modules/three/examples/js/libs/stats.min.js"></script>
   <script src="node_modules/three/examples/js/loaders/GLTFLoader.js"></script>
   <script src="node_modules/ar.js/three.js/build/ar.min.js"></script>
-  <script>THREEx.ArToolkitContext.baseURL = './'</script>
   <script>
     (function(){
       const renderer = new THREE.WebGLRenderer({
-        // antialias: true,
+        antialias: true,
         alpha: true
       });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -34,6 +33,7 @@
       // Add light to scene
       const hemlight = new THREE.HemisphereLight(0xfff0f0, 0x606066, 0.5);
       const spotlight = new THREE.SpotLight(0xffffff);
+      const helper = new THREE.SpotLightHelper(spotlight);
       hemlight.position.set(10, 10, 10);
       spotlight.position.set(10000, 100000, 10000);
       spotlight.castShadow = true;
@@ -42,6 +42,7 @@
       spotlight.shadow.mapSize.height = 2048;
       scene.add(hemlight);
       scene.add(spotlight);
+      scene.add(helper);
 
       // Add Camera
       const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
@@ -52,18 +53,16 @@
       const arToolkitSource = new THREEx.ArToolkitSource({
         sourceType: 'webcam'
       });
-      arToolkitSource.init(function onReady() {
-        onResize();
-      });
+      arToolkitSource.init(() => onResize());
 
       const arToolkitContext = new THREEx.ArToolkitContext({
-        cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'assets/camera_para.dat',
+        cameraParametersUrl: './assets/camera_para.dat',
         detectionMode: 'mono',
         maxDetectionRate: 30,
         canvasWidth: 80*3,
         canvasHeight: 60*3,
       });
-      arToolkitContext.init(function onCompleted(){
+      arToolkitContext.init(() => {
         camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
       });
 
@@ -83,7 +82,7 @@
 
       const markerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
         type: 'pattern',
-        patternUrl: THREEx.ArToolkitContext.baseURL + 'assets/patt.hiro',
+        patternUrl: './assets/patt.hiro',
         changeMatrixMode: 'cameraTransformMatrix'
       });
 
